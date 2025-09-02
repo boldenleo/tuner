@@ -1,5 +1,5 @@
 //
-//  AutoCorrelationPitchDetecto.swift
+//  AutoCorrelationPitchDetector.swift
 //  AudioNoteKit
 //
 //  Created by Denis Boliachkin on 31/8/25.
