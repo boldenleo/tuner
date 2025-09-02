@@ -19,6 +19,8 @@ final class MicViewModel: ObservableObject {
 
     private let mic = MicEngine()
     private var detector = AutoCorrelationPitchDetector()
+    
+    let tuner = TunerViewModel()
 
     func start() {
         requestMicPermission { [weak self] granted in
@@ -33,7 +35,7 @@ final class MicViewModel: ObservableObject {
         isRunning = false
     }
 
-    // MARK: - Permission (iOS 17+ vs старые)
+    // MARK: - Permission (iOS 17+)
     private func requestMicPermission(_ completion: @escaping (Bool) -> Void) {
         if #available(iOS 17.0, *) {
             switch AVAudioApplication.shared.recordPermission {
@@ -83,20 +85,22 @@ final class MicViewModel: ObservableObject {
                 }
 
                 if let pitch = self.detector.process(samples: x, sampleRate: sr) {
-                    DispatchQueue.main.async {
-                        self.sampleRate = sr
-                        self.rmsValue = level
-                        self.frequencyHz = pitch.frequency
-                        self.confidence = pitch.confidence
+                        DispatchQueue.main.async {
+                            self.sampleRate = sr
+                            self.rmsValue = level
+                            self.frequencyHz = pitch.frequency
+                            self.confidence = pitch.confidence
+                            self.tuner.updateFromDetector(freq: pitch.frequency, conf: pitch.confidence, rms: level)
+                        }
+                    } else {
+                        DispatchQueue.main.async {
+                            self.sampleRate = sr
+                            self.rmsValue = level
+                            self.frequencyHz = 0
+                            self.confidence = 0
+                            self.tuner.updateFromDetector(freq: 0, conf: 0, rms: level)
+                        }
                     }
-                } else {
-                    DispatchQueue.main.async {
-                        self.sampleRate = sr
-                        self.rmsValue = level
-                        self.frequencyHz = 0
-                        self.confidence = 0
-                    }
-                }
             }
             isRunning = true
         } catch {
