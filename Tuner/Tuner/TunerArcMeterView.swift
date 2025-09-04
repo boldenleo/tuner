@@ -27,11 +27,11 @@ public struct TunerArcMeterView: View {
     private func base() -> some View {
         ZStack{
             RingSegment(startAngle: .degrees(170), endAngle: .degrees(10), thickness: ring)
-                .fill(Color.gray.opacity(0.8))
+                .fill(Color(hex: 0x243444).opacity(1.0))
                 .frame(width: size, height: size)
                 .blur(radius: glow)
             RingSegment(startAngle: .degrees(170), endAngle: .degrees(10), thickness: ring)
-                .fill(Color.gray.opacity(0.25))
+                .fill(Color(hex: 0x2E4156).opacity(0.25))
                 .frame(width: size, height: size)
         }
         
@@ -41,19 +41,19 @@ public struct TunerArcMeterView: View {
         ZStack{
             // Left Red Zone
             RingSegment(startAngle: .degrees(170), endAngle: .degrees(200), thickness: ring)
-                .fill(Color.red.opacity(0.8))
+                .fill(Color(hex: 0xFF96A6).opacity(1.0))
                 .frame(width: size, height: size)
                 .blur(radius: glow)
             RingSegment(startAngle: .degrees(170), endAngle: .degrees(200), thickness: ring)
-                .fill(Color.red.opacity(0.25))
+                .fill(Color(hex: 0xFF4D6D).opacity(0.5))
                 .frame(width: size, height: size)
             // Right Red Zone
             RingSegment(startAngle: .degrees(-20), endAngle: .degrees(10), thickness: ring)
-                .fill(Color.red.opacity(0.8))
+                .fill(Color(hex: 0xFF96A6).opacity(1.0))
                 .frame(width: size, height: size)
                 .blur(radius: glow)
             RingSegment(startAngle: .degrees(-20), endAngle: .degrees(10), thickness: ring)
-                .fill(Color.red.opacity(0.25))
+                .fill(Color(hex: 0xFF4D6D).opacity(0.5))
                 .frame(width: size, height: size)
         }
         
@@ -62,11 +62,11 @@ public struct TunerArcMeterView: View {
     private func greenZone() -> some View {
         ZStack{
             RingSegment(startAngle: .degrees(-110), endAngle: .degrees(-70), thickness: ring)
-                .fill(Color.green.opacity(0.8))
+                .fill(Color(hex: 0x74FFD9).opacity(1.0))
                 .frame(width: size, height: size)
                 .blur(radius: glow)
             RingSegment(startAngle: .degrees(-110), endAngle: .degrees(-70), thickness: ring)
-                .fill(Color.green.opacity(0.25))
+                .fill(Color(hex: 0x21E0A5).opacity(0.5))
                 .frame(width: size, height: size)
         }
     }
