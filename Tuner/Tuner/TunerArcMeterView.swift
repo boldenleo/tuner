@@ -6,31 +6,39 @@
 //
 
 import SwiftUI
+import AudioNoteKit
 
 public struct TunerArcMeterView: View {
     private let size: CGFloat = 300
     private let ring: CGFloat = 130
     private let glow: CGFloat = 20
     
-    public init() {}
+    var note: Note
+    
+    public init(note: Note) {
+        self.note = note
+    }
     
     public var body: some View {
-        ZStack {
-            base()
-            redZone()
-            greenZone()
-            
-            Ticks(
-                startAngle: .degrees(0),
-                endAngle: .degrees(190),
-                step: 10.0,
-                outerInset: 10,
-                length: 10,
-                width: 1.5,
-                color: Color(hex: 0x4C6070).opacity(0.8)
-            )
+        VStack{
+            NoteLabel(note: note)
+            ZStack {
+                base()
+                redZone()
+                greenZone()
+                
+                Ticks(
+                    startAngle: .degrees(0),
+                    endAngle: .degrees(190),
+                    step: 10.0,
+                    outerInset: 10,
+                    length: 10,
+                    width: 1.5,
+                    color: Color(hex: 0x4C6070).opacity(0.8)
+                )
+            }
+            .frame(width: size, height: size)
         }
-        .frame(width: size, height: size)
     }
     
     // MARK: Layers
@@ -159,7 +167,48 @@ private struct Ticks: View {
     }
 }
 
+struct NoteLabel: View {
+    let note: Note
+    var body: some View {
+        HStack(spacing: 0) {
+            Text(note.name.letter)
+                .font(.system(size: 40, weight: .bold, design: .rounded))
+                .foregroundColor(Color(hex: 0x21E0A5).opacity(1.0))
+
+            if note.name.isSharp {
+                Text("♯")
+                    .font(.system(size: 26, weight: .semibold, design: .rounded))
+                    .baselineOffset(6)
+                    .foregroundColor(Color(hex: 0x21E0A5).opacity(1.0))
+            }
+
+            Text("\(note.octave)")
+                .font(.system(size: 18, weight: .bold, design: .rounded))
+                .foregroundColor(Color(hex: 0x21E0A5).opacity(1.0))
+                .monospacedDigit()
+                .baselineOffset(18)
+        }
+    }
+}
+
+private extension NoteName {
+    var isSharp: Bool {
+        switch self { case .Cs, .Ds, .Fs, .Gs, .As: return true; default: return false }
+    }
+    var letter: String {
+        switch self {
+        case .C, .Cs: return "C"
+        case .D, .Ds: return "D"
+        case .E:      return "E"
+        case .F, .Fs: return "F"
+        case .G, .Gs: return "G"
+        case .A, .As: return "A"
+        case .B:      return "B"
+        }
+    }
+}
+
 #Preview {
-    TunerArcMeterView()
+    TunerArcMeterView(note: Note(.D, 4))
         .preferredColorScheme(.dark)
 }
