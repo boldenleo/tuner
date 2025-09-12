@@ -13,15 +13,17 @@ public struct TunerArcMeterView: View {
     private let ring: CGFloat = 130
     private let glow: CGFloat = 20
     
-    var note: Note
+    var note: Note?
+    var isInTune: Bool
     
-    public init(note: Note) {
-        self.note = note
-    }
+    public init(note: Note?, isInTune: Bool) {
+            self.note = note
+            self.isInTune = isInTune
+        }
     
     public var body: some View {
         VStack{
-            NoteLabel(note: note)
+            NoteLabel(note: note, isInTune: isInTune)
             ZStack {
                 base()
                 redZone()
@@ -168,25 +170,35 @@ private struct Ticks: View {
 }
 
 struct NoteLabel: View {
-    let note: Note
+    let note: Note?
+    let isInTune: Bool
+    
     var body: some View {
-        HStack(spacing: 0) {
-            Text(note.name.letter)
-                .font(.system(size: 40, weight: .bold, design: .rounded))
-                .foregroundColor(Color(hex: 0x21E0A5).opacity(1.0))
+        let accent = isInTune ? Color(hex: 0x21E0A5) : .white
 
-            if note.name.isSharp {
-                Text("♯")
-                    .font(.system(size: 26, weight: .semibold, design: .rounded))
-                    .baselineOffset(6)
-                    .foregroundColor(Color(hex: 0x21E0A5).opacity(1.0))
+        if let note {
+            HStack(spacing: 0) {
+                Text(note.name.letter)
+                    .font(.system(size: 40, weight: .bold, design: .rounded))
+                    .foregroundColor(accent)
+
+                if note.name.isSharp {
+                    Text("♯")
+                        .font(.system(size: 26, weight: .semibold, design: .rounded))
+                        .baselineOffset(6)
+                        .foregroundColor(accent)
+                }
+
+                Text("\(note.octave)")
+                    .font(.system(size: 18, weight: .bold, design: .rounded))
+                    .foregroundColor(accent)
+                    .monospacedDigit()
+                    .baselineOffset(18)
             }
-
-            Text("\(note.octave)")
-                .font(.system(size: 18, weight: .bold, design: .rounded))
-                .foregroundColor(Color(hex: 0x21E0A5).opacity(1.0))
-                .monospacedDigit()
-                .baselineOffset(18)
+        } else {
+            Text("—")
+                .font(.system(size: 40, weight: .semibold, design: .rounded))
+                .foregroundStyle(.secondary)
         }
     }
 }
@@ -209,6 +221,6 @@ private extension NoteName {
 }
 
 #Preview {
-    TunerArcMeterView(note: Note(.D, 4))
+    TunerArcMeterView(note: Note(.D, 4), isInTune: false)
         .preferredColorScheme(.dark)
 }

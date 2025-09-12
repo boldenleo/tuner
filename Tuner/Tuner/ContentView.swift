@@ -37,19 +37,24 @@ struct ContentView: View {
                     .font(.caption).foregroundStyle(.secondary).monospaced()
             }
 
-            StringsRow(
-                tuning: .guitarStandardE,
-                selected: selectedStringBinding
+            TunerArcMeterView(
+                note: mic.tuner.nearestNote,
+                isInTune: mic.tuner.isStable
             )
+                .frame(maxWidth: .infinity)
+                .frame(height: 340)
 
-            TunerMeterView(
-                title: centerTitle(vm: mic.tuner),
-                cents: mic.tuner.centsToTarget,
-                isStable: mic.tuner.isStable
-            )
-            .frame(height: 140)
+            Text(String(format: "%+.1f cents", mic.tuner.centsToTarget))
+                .font(.footnote)
+                .foregroundStyle(mic.tuner.isStable ? .green : .secondary)
+                .monospacedDigit()
 
             Spacer()
+
+            StringsRow(
+                tuning: mic.tuner.tuning,
+                selected: selectedStringBinding
+            )
 
             HStack {
                 Button(mic.isRunning ? "Stop" : "Start") {
@@ -65,19 +70,13 @@ struct ContentView: View {
             }
         }
         .padding()
+        .padding()
         .onAppear {
             mic.start()
             mic.tuner.tuning = .guitarStandardE
         }
         .onDisappear { mic.stop() }
-    }
-
-    private func centerTitle(vm: TunerViewModel) -> String {
-        if let note = vm.nearestNote {
-            return "\(note.name.display)\(note.octave)"
-        } else {
-            return "—"
-        }
+        .appBackground(Color(hex: 0x131B2A))
     }
 }
 
