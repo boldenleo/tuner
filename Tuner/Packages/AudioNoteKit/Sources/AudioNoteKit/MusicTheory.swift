@@ -130,3 +130,23 @@ public enum PitchMath {
         return x
     }
 }
+
+public extension NoteName {
+    var isSharp: Bool {
+        switch self {
+        case .Cs, .Ds, .Fs, .Gs, .As: return true
+        default: return false
+        }
+    }
+    var letter: String {
+        switch self {
+        case .C, .Cs: return "C"
+        case .D, .Ds: return "D"
+        case .E:      return "E"
+        case .F, .Fs: return "F"
+        case .G, .Gs: return "G"
+        case .A, .As: return "A"
+        case .B:      return "B"
+        }
+    }
+}

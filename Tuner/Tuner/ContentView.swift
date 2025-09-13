@@ -39,7 +39,8 @@ struct ContentView: View {
 
             TunerArcMeterView(
                 note: mic.tuner.nearestNote,
-                isInTune: mic.tuner.isStable
+                isInTune: mic.tuner.isStable,
+                cents: mic.tuner.centsToTarget
             )
                 .frame(maxWidth: .infinity)
                 .frame(height: 340)
@@ -88,13 +89,16 @@ private struct StringsRow: View {
 
     var body: some View {
         HStack(spacing: 8) {
-            ForEach(Array(tuning.strings.enumerated()), id: \.0) { (idx, note) in
+            ForEach((0..<tuning.strings.count).reversed(), id: \.self) { idx in
+                let note = tuning.strings[idx]
                 let isSelected = (selected == idx)
+                let stringNumber = tuning.strings.count - idx
 
                 Button {
                     selected = idx
                 } label: {
                     VStack(spacing: 2) {
+                        Text("\(stringNumber)").font(.caption2).foregroundStyle(.secondary)
                         Text(note.name.display).bold()
                         Text("\(note.octave)")
                             .font(.caption).foregroundStyle(.secondary)
@@ -102,9 +106,8 @@ private struct StringsRow: View {
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 8)
                     .background {
-                        Capsule()
-                            .fill(isSelected ? Color.blue.opacity(0.22)
-                                             : Color.gray.opacity(0.12))
+                        Capsule().fill(isSelected ? Color.blue.opacity(0.22)
+                                                  : Color.gray.opacity(0.12))
                     }
                     .overlay {
                         Capsule().stroke(isSelected ? Color.blue
