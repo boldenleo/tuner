@@ -18,7 +18,7 @@ struct AppBackground: ViewModifier {
 }
 
 extension View {
-    func appBackground(_ color: Color = Color(hex: 0x131B2A)) -> some View {
+    func appBackground(_ color: Color = Color(hex: 0x0B1324)) -> some View {
         modifier(AppBackground(color: color))
     }
 }
