@@ -12,38 +12,53 @@ public struct TunerArcMeterView: View {
     private let size: CGFloat = 300
     private let ring: CGFloat = 130
     private let glow: CGFloat = 20
-    
+
     var note: Note?
     var isInTune: Bool
-    
-    public init(note: Note?, isInTune: Bool) {
-            self.note = note
-            self.isInTune = isInTune
-        }
-    
+    var cents: Double
+
+    private let scale = TunerScale()
+
+    private let spanDeg: Double = 200
+    private var centerDeg: Double { -90 }
+    private var startDeg: Double { centerDeg - spanDeg/2 }
+    private var endDeg: Double { centerDeg + spanDeg/2 }
+
+    public init(note: Note?, isInTune: Bool, cents: Double) {
+        self.note = note
+        self.isInTune = isInTune
+        self.cents = cents
+    }
+
     public var body: some View {
-        VStack{
+        VStack(spacing: 12) {
             NoteLabel(note: note, isInTune: isInTune)
-            ZStack {
-                base()
-                redZone()
-                greenZone()
-                
-                Ticks(
-                    startAngle: .degrees(0),
-                    endAngle: .degrees(190),
-                    step: 10.0,
-                    outerInset: 10,
-                    length: 10,
-                    width: 1.5,
-                    color: Color(hex: 0x4C6070).opacity(0.8)
-                )
+
+            GeometryReader { geo in
+                ZStack {
+                    base()
+                    redZone()
+                    greenZone()
+                    
+                    Ticks(
+                        startAngle: .degrees(0),
+                        endAngle: .degrees(190),
+                        step: 10.0,
+                        outerInset: 10,
+                        length: 10,
+                        width: 1.5,
+                        color: Color(hex: 0x4C6070).opacity(0.8)
+                    )
+
+                    pointer(cents: cents)
+                }
             }
             .frame(width: size, height: size)
         }
     }
-    
-    // MARK: Layers
+
+    // MARK: - Drawing
+
     private func base() -> some View {
         ZStack{
             RingSegment(startAngle: .degrees(170), endAngle: .degrees(10), thickness: ring)
@@ -52,12 +67,11 @@ public struct TunerArcMeterView: View {
             
             RingSegment(startAngle: .degrees(170), endAngle: .degrees(10), thickness: ring)
                 .fill(Color(hex: 0x243444).opacity(0.8))
-                .frame(width: size, height: size)
                 .blur(radius: glow)
         }
-        
     }
-    
+
+    @ViewBuilder
     private func redZone() -> some View {
         ZStack{
             // Left Red Zone
@@ -83,6 +97,7 @@ public struct TunerArcMeterView: View {
         
     }
     
+    @ViewBuilder
     private func greenZone() -> some View {
         ZStack{
             RingSegment(startAngle: .degrees(-110), endAngle: .degrees(-70), thickness: ring)
@@ -95,6 +110,73 @@ public struct TunerArcMeterView: View {
                 .blur(radius: glow)
         }
     }
+
+    @ViewBuilder
+    private func tickMarks(stepCents: Double) -> some View {
+        let stepDeg = spanDeg * (stepCents / (2 * scale.displayRange))
+        Ticks(
+            startAngle: .degrees(startDeg),
+            endAngle: .degrees(endDeg),
+            step: stepDeg,
+            outerInset: 10,
+            length: 12,
+            width: 2,
+            color: Color(hex: 0x4C6070).opacity(0.85)
+        )
+    }
+    
+    private let displayRangeCents: Double = 50
+    private let degPerCent: Double = 2.0
+
+    private func angle(for cents: Double) -> Angle {
+        let clamped = max(-displayRangeCents, min(displayRangeCents, cents))
+        return .degrees(degPerCent * clamped)    // 0¢ -> 0°, верх
+    }
+    
+    @ViewBuilder
+    private func pointer(cents: Double) -> some View {
+        GeometryReader { geo in
+            let side = min(geo.size.width, geo.size.height)
+            let clamped = max(-displayRangeCents, min(displayRangeCents, cents))
+
+            ZStack {
+                Circle()
+                    .fill(Color(hex: 0xD9D9D9).opacity(0.95))
+                    .frame(width: 15, height: 15)
+                    .shadow(radius: 1)
+
+                TaperedNeedle(length: 75, baseWidth: 10, tipWidth: 2)
+                    .fill(Color(hex: 0xD9D9D9).opacity(0.95))
+                    .rotationEffect(angle(for: clamped))
+                    .animation(.easeOut(duration: 0.08), value: clamped)
+            }
+            .frame(width: side, height: side)
+        }
+    }
+    
+    private struct TaperedNeedle: Shape {
+        var length: CGFloat
+        var baseWidth: CGFloat
+        var tipWidth: CGFloat
+
+        func path(in rect: CGRect) -> Path {
+            let cx = rect.midX
+            let cy = rect.midY
+
+            var p = Path()
+            p.move(to: CGPoint(x: cx - baseWidth/2, y: cy))
+            p.addLine(to: CGPoint(x: cx + baseWidth/2, y: cy))
+            p.addLine(to: CGPoint(x: cx + tipWidth/2, y: cy - length))
+            p.addArc(center: CGPoint(x: cx, y: cy - length),
+                     radius: tipWidth/2,
+                     startAngle: .degrees(0),
+                     endAngle: .degrees(180),
+                     clockwise: false)
+            p.addLine(to: CGPoint(x: cx - baseWidth/2, y: cy))
+            p.closeSubpath()
+            return p
+        }
+    }
 }
 
 private struct RingSegment: Shape {
@@ -103,7 +185,7 @@ private struct RingSegment: Shape {
     var thickness: CGFloat = 1
     
     func path(in rect: CGRect) -> Path {
-        let c = CGPoint(x: rect.midX, y: rect.midY) // center
+        let c = CGPoint(x: rect.midX, y: rect.midY)
         let outerR = min(rect.width, rect.height) * 0.5
         let innerR = max(0, outerR - thickness)
         
@@ -172,23 +254,20 @@ private struct Ticks: View {
 struct NoteLabel: View {
     let note: Note?
     let isInTune: Bool
-    
+
     var body: some View {
         let accent = isInTune ? Color(hex: 0x21E0A5) : .white
-
         if let note {
             HStack(spacing: 0) {
                 Text(note.name.letter)
                     .font(.system(size: 40, weight: .bold, design: .rounded))
                     .foregroundColor(accent)
-
                 if note.name.isSharp {
                     Text("♯")
                         .font(.system(size: 26, weight: .semibold, design: .rounded))
                         .baselineOffset(6)
                         .foregroundColor(accent)
                 }
-
                 Text("\(note.octave)")
                     .font(.system(size: 18, weight: .bold, design: .rounded))
                     .foregroundColor(accent)
@@ -203,24 +282,7 @@ struct NoteLabel: View {
     }
 }
 
-private extension NoteName {
-    var isSharp: Bool {
-        switch self { case .Cs, .Ds, .Fs, .Gs, .As: return true; default: return false }
-    }
-    var letter: String {
-        switch self {
-        case .C, .Cs: return "C"
-        case .D, .Ds: return "D"
-        case .E:      return "E"
-        case .F, .Fs: return "F"
-        case .G, .Gs: return "G"
-        case .A, .As: return "A"
-        case .B:      return "B"
-        }
-    }
-}
-
 #Preview {
-    TunerArcMeterView(note: Note(.D, 4), isInTune: false)
+    TunerArcMeterView(note: Note(.D, 4), isInTune: false, cents: -30)
         .preferredColorScheme(.dark)
 }

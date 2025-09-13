@@ -39,7 +39,8 @@ struct ContentView: View {
 
             TunerArcMeterView(
                 note: mic.tuner.nearestNote,
-                isInTune: mic.tuner.isStable
+                isInTune: mic.tuner.isStable,
+                cents: mic.tuner.centsToTarget
             )
                 .frame(maxWidth: .infinity)
                 .frame(height: 340)
