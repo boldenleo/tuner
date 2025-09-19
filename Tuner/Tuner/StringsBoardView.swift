@@ -10,26 +10,19 @@ import AudioNoteKit
 
 public struct StringsBoardView: View {
     public let spec: InstrumentSpec
-    public var stringsHeight: CGFloat = 3000
-    public var bubbleSpacing: CGFloat = 12
-    public var bubbleDiameter: CGFloat = 36
-    public var activeIndex: Int? = nil
-    public var fretCount: Int = 4
+    private let stringsHeight: CGFloat = 300
+    private let bubbleSpacing: CGFloat = 12
+    private let bubbleDiameter: CGFloat = 36
+    private let fretCount: Int = 4
+    public var onSelect: ((Int) -> Void)? = nil
+    @State private var localSelectedIndex: Int? = nil
 
     public init(spec: InstrumentSpec,
-                stringsHeight: CGFloat = 300,
-                bubbleSpacing: CGFloat = 12,
-                bubbleDiameter: CGFloat = 36,
-                activeIndex: Int? = nil,
-                fretCount: Int = 4) {
+                onSelect: ((Int) -> Void)? = nil) {
         self.spec = spec
-        self.stringsHeight = stringsHeight
-        self.bubbleSpacing = bubbleSpacing
-        self.bubbleDiameter = bubbleDiameter
-        self.activeIndex = activeIndex
-        self.fretCount = fretCount
+        self.onSelect = onSelect
     }
-
+    
     private var gridWidth: CGFloat {
         CGFloat(spec.stringCount) * bubbleDiameter
         + CGFloat(max(0, spec.stringCount - 1)) * bubbleSpacing
@@ -39,11 +32,19 @@ public struct StringsBoardView: View {
         VStack(spacing: 10) {
             HStack(spacing: bubbleSpacing) {
                 ForEach(spec.notes.indices, id: \.self) { i in
-                    NoteBubble(letter: spec.notes[i].name.letter,
-                               sharp: spec.notes[i].name.isSharp,
-                               isActive: activeIndex == i,
-                               diameter: bubbleDiameter)
-                }
+                        Button {
+                            localSelectedIndex = i
+                            onSelect?(i)
+                        } label: {
+                            NoteBubble(letter: spec.notes[i].name.letter,
+                                       sharp: spec.notes[i].name.isSharp,
+                                       isActive: localSelectedIndex == i,
+                                       diameter: bubbleDiameter)
+                        }
+                        .buttonStyle(.plain)
+                        .contentShape(Circle())
+                        .accessibilityLabel("String \(i+1)")
+                    }
             }
             ZStack(alignment: .top) {
                 if fretCount > 0 {
@@ -61,10 +62,16 @@ public struct StringsBoardView: View {
                     ForEach(spec.notes.indices, id: \.self) { i in
                         ZStack {
                             StringLine(thickness: thickness(for: i),
-                                       isActive: activeIndex == i)
+                                       isActive: localSelectedIndex == i)
                                 .frame(width: thickness(for: i), height: stringsHeight)
                         }
                         .frame(width: bubbleDiameter, alignment: .top)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            localSelectedIndex = i
+                            onSelect?(i)
+                        }
+                        .accessibilityAddTraits(.isButton)
                     }
                 }
                 .frame(width: gridWidth)
@@ -210,8 +217,8 @@ private struct FretsOverlay: View {
 // Preview
 #Preview {
     VStack(spacing: 24) {
-        StringsBoardView(spec: .guitar6_Std, stringsHeight: 300, activeIndex: 4, fretCount: 4)
-        StringsBoardView(spec: .bass4_Std, stringsHeight: 300)
+        StringsBoardView(spec: .guitar6_Std)
+        StringsBoardView(spec: .bass4_Std)
     }
     .padding()
     .preferredColorScheme(.dark)

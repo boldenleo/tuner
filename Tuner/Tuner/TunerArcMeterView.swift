@@ -49,11 +49,21 @@ public struct TunerArcMeterView: View {
                         width: 1.5,
                         color: Color(hex: 0x4C6070).opacity(0.8)
                     )
-
+                    GrainOverlay(opacity: 0.03, blend: .overlay)
+                        .mask(
+                            RingSegment(
+                                startAngle: .degrees(170),
+                                endAngle:   .degrees(10),
+                                thickness:  ring + glow * 2
+                            )
+                            .frame(width: size, height: size)
+                            .blur(radius: 2)
+                        )
+                    
                     pointer(cents: cents)
                 }
             }
-            .frame(width: size, height: size)
+            .frame(width: size, height: size * 0.62)
         }
     }
 

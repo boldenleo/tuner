@@ -11,12 +11,7 @@ import AudioNoteKit
 struct ContentView: View {
     @StateObject private var mic = MicViewModel()
 
-    private var selectedStringBinding: Binding<Int> {
-        Binding(
-            get: { mic.tuner.selectedStringIndex },
-            set: { mic.tuner.selectedStringIndex = $0 }
-        )
-    }
+    private let defaultSpec = InstrumentSpec.guitar6_Std
 
     private var a4Binding: Binding<Double> {
         Binding(
@@ -26,7 +21,7 @@ struct ContentView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 8) {
             Text("Sample rate: \(Int(mic.sampleRate)) Hz")
                 .font(.caption).foregroundStyle(.secondary)
 
@@ -36,26 +31,27 @@ struct ContentView: View {
                 Text(String(format: "conf: %.2f", mic.confidence))
                     .font(.caption).foregroundStyle(.secondary).monospaced()
             }
+            
+            Text(String(format: "%+.1f cents", mic.tuner.centsToTarget))
+                .font(.footnote)
+                .foregroundStyle(mic.tuner.isStable ? .green : .secondary)
+                .monospacedDigit()
 
             TunerArcMeterView(
                 note: mic.tuner.nearestNote,
                 isInTune: mic.tuner.isStable,
                 cents: mic.tuner.centsToTarget
             )
-                .frame(maxWidth: .infinity)
-                .frame(height: 340)
+            .frame(maxWidth: .infinity)
 
-            Text(String(format: "%+.1f cents", mic.tuner.centsToTarget))
-                .font(.footnote)
-                .foregroundStyle(mic.tuner.isStable ? .green : .secondary)
-                .monospacedDigit()
-
-            Spacer()
-
-            StringsRow(
-                tuning: mic.tuner.tuning,
-                selected: selectedStringBinding
+            StringsBoardView(
+                spec: defaultSpec,
+                onSelect: { idx in
+                    mic.tuner.selectedStringIndex = idx
+                    mic.tuner.config.autoStringDetection = false
+                }
             )
+            .frame(maxWidth: .infinity, alignment: .center)
 
             HStack {
                 Button(mic.isRunning ? "Stop" : "Start") {
@@ -71,51 +67,12 @@ struct ContentView: View {
             }
         }
         .padding()
-        .padding()
         .onAppear {
             mic.start()
             mic.tuner.tuning = .guitarStandardE
         }
         .onDisappear { mic.stop() }
         .appBackground(Color(hex: 0x131B2A))
-    }
-}
-
-// MARK: - Subviews
-
-private struct StringsRow: View {
-    let tuning: Tuning
-    @Binding var selected: Int
-
-    var body: some View {
-        HStack(spacing: 8) {
-            ForEach((0..<tuning.strings.count).reversed(), id: \.self) { idx in
-                let note = tuning.strings[idx]
-                let isSelected = (selected == idx)
-                let stringNumber = tuning.strings.count - idx
-
-                Button {
-                    selected = idx
-                } label: {
-                    VStack(spacing: 2) {
-                        Text("\(stringNumber)").font(.caption2).foregroundStyle(.secondary)
-                        Text(note.name.display).bold()
-                        Text("\(note.octave)")
-                            .font(.caption).foregroundStyle(.secondary)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 8)
-                    .background {
-                        Capsule().fill(isSelected ? Color.blue.opacity(0.22)
-                                                  : Color.gray.opacity(0.12))
-                    }
-                    .overlay {
-                        Capsule().stroke(isSelected ? Color.blue
-                                                    : Color.gray.opacity(0.4), lineWidth: 1)
-                    }
-                }
-            }
-        }
     }
 }
 
